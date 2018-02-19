@@ -4,7 +4,7 @@ Some meaningful text explaining my branch...
 
 # Starting
 
-Please check /modified_leapd/  
+Please check `/modified_leapd/`  
   
 **Terminal1** -> `roscore`  
 **Terminal2** -> `sudo leapd`  
