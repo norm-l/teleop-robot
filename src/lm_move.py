@@ -29,12 +29,24 @@ display_trajectory_publisher = rospy.Publisher(
                                     moveit_msgs.msg.DisplayTrajectory,
                                     queue_size=20)
 
+    # Pseudo Code
+    # J=getJacobian();
+    # JJ= J.inverse();
+    # Vector qq;
+    # Vector xx;
+    # xx= [hand_vel_x hand_vel_y hand_vel_z 0 0 0 ];
+    # qq=JJ*xx;
+
+    # moveit_commander.
+    # velocityMove(1,qq[1]);
+    # velocityMove(2,qq[2]);
+
 print('============ Waiting for RVIZ: WAITING!')
 rospy.sleep(10)
 print('============ Waiting for RVIZ: DONE!')
 
 def begin_plan(new_pos):
-    # group.clear_pose_targets()
+    # group.clear_pose_targets()hand_vel_x
     pose_target = geometry_msgs.msg.Pose()
 
     previous_pos = group.get_current_pose().pose.position
@@ -49,7 +61,7 @@ def begin_plan(new_pos):
     else:
         print "============ INFO: Valid new position passed, attempting: ", new_pos.x, new_pos.y, new_pos.z
         # pose_target.orientation.w = 0.0 # For now, let's ignore orientation.
-        pose_target.position.x = new_pos.x # 0.045308
+        pose_target.position.x = new_pos.x # 0.0453
         pose_target.position.y = new_pos.y
         pose_target.position.z = new_pos.z
 

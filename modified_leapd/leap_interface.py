@@ -236,6 +236,12 @@ class LeapInterface(Leap.Listener):
     def get_finger_point(self, fingerName, fingerPointName):
         return getattr(getattr(self, fingerName), fingerPointName)
 
+    def get_right_hand(self):
+        return self.right_hand
+    
+    def get_left_hand(self):
+        return self.left_hand
+
 
 class Runner(threading.Thread):
 
@@ -269,6 +275,12 @@ class Runner(threading.Thread):
 
     def get_finger_point(self, fingerName, fingerPointName):
         return self.listener.get_finger_point(fingerName, fingerPointName)
+    
+    def get_rh(self):
+        return self.listener.get_right_hand()
+    
+    def get_lh(self):
+        return self.listener.get_left_hand()
 
     def run (self):
         while True:
