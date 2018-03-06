@@ -14,7 +14,7 @@ Please check `/modified_leapd/`
 *(optional)* **Terminal6** -> `rostopic echo /leapmotion/data | grep "normal" -A 3`    
 
 # Requirements
-
+- [Ubuntu 16.04](http://releases.ubuntu.com/16.04/)
 - [Leap Motion SDK (v2 Tracking)](https://developer.leapmotion.com/sdk/v2)
 - [Robot Operating System](http://www.ros.org/)
 - [leap_motion](http://wiki.ros.org/leap_motion)
