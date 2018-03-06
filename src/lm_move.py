@@ -7,6 +7,7 @@ import moveit_msgs.msg
 import geometry_msgs.msg
 import shape_msgs.msg
 from leap_motion.msg import leapros
+from sympy import Matrix
 
 from std_msgs.msg import String
 
@@ -29,24 +30,12 @@ display_trajectory_publisher = rospy.Publisher(
                                     moveit_msgs.msg.DisplayTrajectory,
                                     queue_size=20)
 
-    # Pseudo Code
-    # J=getJacobian();
-    # JJ= J.inverse();
-    # Vector qq;
-    # Vector xx;
-    # xx= [hand_vel_x hand_vel_y hand_vel_z 0 0 0 ];
-    # qq=JJ*xx;
-
-    # moveit_commander.
-    # velocityMove(1,qq[1]);
-    # velocityMove(2,qq[2]);
-
 print('============ Waiting for RVIZ: WAITING!')
-rospy.sleep(10)
+# rospy.sleep(10)
 print('============ Waiting for RVIZ: DONE!')
 
 def begin_plan(new_pos):
-    # group.clear_pose_targets()hand_vel_x
+    # group.clear_pose_targets()
     pose_target = geometry_msgs.msg.Pose()
 
     previous_pos = group.get_current_pose().pose.position
@@ -63,7 +52,7 @@ def begin_plan(new_pos):
         # pose_target.orientation.w = 0.0 # For now, let's ignore orientation.
         pose_target.position.x = new_pos.x # 0.0453
         pose_target.position.y = new_pos.y
-        pose_target.position.z = new_pos.z
+        pose_target.position.z = new_pos.z     
 
         group.set_pose_target(pose_target)
         plan = group.plan()
@@ -83,6 +72,33 @@ def lm_move(leap_msg):
     
 
 def lm_listener():
+    #https://books.google.co.uk/books?id=C_2zCgAAQBAJ&pg=PA142&lpg=PA142&dq=sympy+jacobian&source=bl&ots=rGX2-h1peQ&sig=9Bj4qUtBXAZs-iwZcgjrT4Xilm4&hl=en&sa=X&ved=0ahUKEwi3muXwktjZAhUJDsAKHeuMCvEQ6AEIlgEwCQ#v=onepage&q=sympy%20jacobian&f=false
+    
+    # Pseudo Code
+    # J=getJacobian();
+    # JJ= J.inverse();
+    # Vector qq;
+    # Vector xx;
+    # xx= [hand_vel_x hand_vel_y hand_vel_z 0 0 0 ];
+    # qq=JJ*xx;
+
+    # moveit_commander.
+    # velocityMove(1,qq[1]);
+    # velocityMove(2,qq[2]);
+
+    # -----
+
+    # f = Matrix(???) What function?
+    # v1 = Matrix([0.01, 0.02, 0.01, 0.01, 0.03, 0.04])
+    # J = f.jacobian(v1)
+    # print J
+
+    # J_inv = J.inv()
+    # curr_pos = Matrix([0.05, 0.01, 0.10, 0, 0, 0])
+    # new_pos = J_inv * curr_pos
+    # print new_pos
+
+
     rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1) # Subscribe to the topic and call lm_move each time we receive some input
     rospy.spin() # Do this infinite amount of times
 
