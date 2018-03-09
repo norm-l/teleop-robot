@@ -28,10 +28,10 @@ group = moveit_commander.MoveGroupCommander("manipulator")
 display_trajectory_publisher = rospy.Publisher(
                                     '/move_group/display_planned_path',
                                     moveit_msgs.msg.DisplayTrajectory,
-                                    queue_size=20)
+                                    queue_size=1)
 
 print('============ Waiting for RVIZ: WAITING!')
-# rospy.sleep(10)
+rospy.sleep(10)
 print('============ Waiting for RVIZ: DONE!')
 
 def begin_plan(new_pos):
@@ -43,7 +43,7 @@ def begin_plan(new_pos):
     previous_y = round(previous_pos.y, 4) == round(new_pos.y, 4)
     previous_z = round(previous_pos.z, 4) == round(new_pos.z, 4)
 
-    print "============ Previous: ", previous_pos.x, previous_pos.y, previous_pos.z
+    # print "============ Previous: ", previous_pos.x, previous_pos.y, previous_pos.z
 
     if previous_x or previous_y or previous_z:
         print "============ ERROR: previous position is too close to new position!"
@@ -60,7 +60,7 @@ def begin_plan(new_pos):
         group.execute(plan)
 
         final_pos = group.get_current_pose().pose.position
-        print "============ New Position: ", final_pos.x, final_pos.y, final_pos.z, "\n\n"
+        # print "============ New Position: ", final_pos.x, final_pos.y, final_pos.z, "\n\n"
 
 
 def lm_move(leap_msg):
@@ -97,6 +97,17 @@ def lm_listener():
     # curr_pos = Matrix([0.05, 0.01, 0.10, 0, 0, 0])
     # new_pos = J_inv * curr_pos
     # print new_pos
+
+    # J = Matrix(3,3, [0.0, 0.0, 0.0 ,0.0, 0.0, 0.0 ,0.0, 0.0, 0.0]) # 3x3 Matrix
+    # q = Matrix(1,6, [0.01, 0.02, 0.01, 0.01, 0.03, 0.04]) #1x6 Vector
+    # J = robot.jacobian(q)
+
+    # joint_names = Matrix(group.get_active_joints()) # Vector of joint names
+    # print robot.get_link()
+    # robot_state = Matrix(robot.get_link)
+    # J = robot_state.jacobian(joint_names)
+
+    #http://docs.ros.org/kinetic/api/moveit_tutorials/html/doc/pr2_tutorials/kinematics/src/doc/kinematic_model_tutorial.html?highlight=jacobian
 
 
     rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1) # Subscribe to the topic and call lm_move each time we receive some input
