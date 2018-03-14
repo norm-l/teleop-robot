@@ -59,7 +59,7 @@ def begin_plan(new_pos):
         rospy.sleep(5)
         group.execute(plan)
 
-        final_pos = group.get_current_pose().pose.position
+        # final_pos = group.get_current_pose().pose.position
         # print "============ New Position: ", final_pos.x, final_pos.y, final_pos.z, "\n\n"
 
 
@@ -72,42 +72,9 @@ def lm_move(leap_msg):
     
 
 def lm_listener():
-    #https://books.google.co.uk/books?id=C_2zCgAAQBAJ&pg=PA142&lpg=PA142&dq=sympy+jacobian&source=bl&ots=rGX2-h1peQ&sig=9Bj4qUtBXAZs-iwZcgjrT4Xilm4&hl=en&sa=X&ved=0ahUKEwi3muXwktjZAhUJDsAKHeuMCvEQ6AEIlgEwCQ#v=onepage&q=sympy%20jacobian&f=false
-    
-    # Pseudo Code
-    # J=getJacobian();
-    # JJ= J.inverse();
-    # Vector qq;
-    # Vector xx;
-    # xx= [hand_vel_x hand_vel_y hand_vel_z 0 0 0 ];
-    # qq=JJ*xx;
-
-    # moveit_commander.
-    # velocityMove(1,qq[1]);
-    # velocityMove(2,qq[2]);
-
-    # -----
-
-    # f = Matrix(???) What function?
-    # v1 = Matrix([0.01, 0.02, 0.01, 0.01, 0.03, 0.04])
-    # J = f.jacobian(v1)
-    # print J
-
-    # J_inv = J.inv()
-    # curr_pos = Matrix([0.05, 0.01, 0.10, 0, 0, 0])
-    # new_pos = J_inv * curr_pos
-    # print new_pos
-
-    # J = Matrix(3,3, [0.0, 0.0, 0.0 ,0.0, 0.0, 0.0 ,0.0, 0.0, 0.0]) # 3x3 Matrix
-    # q = Matrix(1,6, [0.01, 0.02, 0.01, 0.01, 0.03, 0.04]) #1x6 Vector
-    # J = robot.jacobian(q)
-
-    # joint_names = Matrix(group.get_active_joints()) # Vector of joint names
-    # print robot.get_link()
-    # robot_state = Matrix(robot.get_link)
-    # J = robot_state.jacobian(joint_names)
-
-    #http://docs.ros.org/kinetic/api/moveit_tutorials/html/doc/pr2_tutorials/kinematics/src/doc/kinematic_model_tutorial.html?highlight=jacobian
+    # print robot.get_link(group.get_joints()[-1])
+    # print group.get_joints()[-1]
+    # print robot.get_link('ee_link').pose()
 
 
     rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1) # Subscribe to the topic and call lm_move each time we receive some input
@@ -119,3 +86,60 @@ if __name__ == '__main__':
         lm_listener() # Call the listener method
     except rospy.ROSInterruptException:
         pass
+
+
+
+# https://books.google.co.uk/books?id=C_2zCgAAQBAJ&pg=PA142&lpg=PA142&dq=sympy+jacobian&source=bl&ots=rGX2-h1peQ&sig=9Bj4qUtBXAZs-iwZcgjrT4Xilm4&hl=en&sa=X&ved=0ahUKEwi3muXwktjZAhUJDsAKHeuMCvEQ6AEIlgEwCQ#v=onepage&q=sympy%20jacobian&f=false
+# http://docs.ros.org/kinetic/api/moveit_tutorials/html/doc/pr2_tutorials/kinematics/src/doc/kinematic_model_tutorial.html?highlight=jacobian
+# https://github.com/ros-planning/moveit_tutorials/blob/indigo-devel/doc/pr2_tutorials/kinematics/src/kinematic_model_tutorial.cpp
+
+
+# http://docs.ros.org/jade/api/moveit_core/html/robot__state_8cpp_source.html#l01098
+# ^ Actual jacobian
+
+# Pseudo Code
+# J=getJacobian();
+# JJ= J.inverse();
+# Vector qq;
+# Vector xx;
+# xx= [hand_vel_x hand_vel_y hand_vel_z 0 0 0 ];
+# qq=JJ*xx;
+
+# moveit_commander.
+# velocityMove(1,qq[1]);
+# velocityMove(2,qq[2]);
+
+# -----
+
+# f = Matrix(???) What function?
+# v1 = Matrix([0.01, 0.02, 0.01, 0.01, 0.03, 0.04])
+# J = f.jacobian(v1)
+# print J
+
+# J_inv = J.inv()
+# curr_pos = Matrix([0.05, 0.01, 0.10, 0, 0, 0])
+# new_pos = J_inv * curr_pos
+# print new_pos
+
+# J = Matrix(3,3, [0.0, 0.0, 0.0 ,0.0, 0.0, 0.0 ,0.0, 0.0, 0.0]) # 3x3 Matrix
+# q = Matrix(1,6, [0.01, 0.02, 0.01, 0.01, 0.03, 0.04]) #1x6 Vector
+# J = robot.jacobian(q)
+
+# joint_names = Matrix(group.get_active_joints()) # Vector of joint names
+# print robot.get_link()
+# robot_state = Matrix(robot.get_link)
+# J = robot_state.jacobian(joint_names)
+
+
+#C++ Version:
+# Eigen::Vector3d reference_point_position(0.0,0.0,0.0);
+# Eigen::MatrixXd jacobian;
+# kinematic_state->getJacobian(joint_model_group, kinematic_state->getLinkModel(joint_model_group->getLinkModelNames().back()), reference_point_position, jacobian);
+# ROS_INFO_STREAM("Jacobian: " << jacobian);
+
+#Python: 
+#robot->getJacobian(group, robot->getLinkModel(group->getLinkModelNames().back()), reference_point_position, jacobian)
+
+#group->getLinkModelNames = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint', 'ee_fixed_joint']
+#.back() = 'ee_fixed_joint'
+
