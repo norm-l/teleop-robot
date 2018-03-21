@@ -7,7 +7,7 @@ import moveit_msgs.msg
 import geometry_msgs.msg
 import shape_msgs.msg
 from leap_motion.msg import leapros
-from sympy import Matrix
+from sympy.matrices import *
 
 from std_msgs.msg import String
 
@@ -31,7 +31,7 @@ display_trajectory_publisher = rospy.Publisher(
                                     queue_size=1)
 
 print('============ Waiting for RVIZ: WAITING!')
-rospy.sleep(10)
+# rospy.sleep(10)
 print('============ Waiting for RVIZ: DONE!')
 
 def begin_plan(new_pos):
@@ -72,13 +72,20 @@ def lm_move(leap_msg):
     
 
 def lm_listener():
-    # print robot.get_link(group.get_joints()[-1])
-    # print group.get_joints()[-1]
-    # print robot.get_link('ee_link').pose()
+    root_joint_model = group.get_joints()[0] # shoulder_pan_joint
+    root_link_model = robot.get_link_names() # ['world', 'base_link', 'base', 'shoulder_link', 'upper_arm_link', 'forearm_link', 'wrist_1_link', 'wrist_2_link', 'wrist_3_link', 'ee_link', 'tool0']
+    reference_transform = robot.get_link("base")
+    print reference_transform.pose()
+    
+    jacobian = zeros(6) # zero matrix
+    
+    # joint_transform = 
+    # joint_axis = 
 
+    print jacobian
 
-    rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1) # Subscribe to the topic and call lm_move each time we receive some input
-    rospy.spin() # Do this infinite amount of times
+    # rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1) # Subscribe to the topic and call lm_move each time we receive some input
+    # rospy.spin() # Do this infinite amount of times
 
 
 if __name__ == '__main__':
