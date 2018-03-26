@@ -11,7 +11,7 @@ Please check `/modified_leapd/`
 *(optional)* **Terminal3** -> `LeapControlPanel`  
 **Terminal4** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
 **Terminal5** -> `rosrun leap_motion sender.py`  
-*(optional)* **Terminal6** -> `rostopic echo /leapmotion/data | grep "normal" -A 3`    
+*(optional)* **Terminal6** -> `rostopic echo /leapmotion/data | grep "palmpos" -A 3`    
 
 # Requirements
 - [Ubuntu 16.04](http://releases.ubuntu.com/16.04/)
