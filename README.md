@@ -18,3 +18,16 @@ Please check `/modified_leapd/`
 - [Leap Motion SDK (v2 Tracking)](https://developer.leapmotion.com/sdk/v2)
 - [Robot Operating System](http://www.ros.org/)
 - [leap_motion](http://wiki.ros.org/leap_motion)
+
+# leap_motion Setup
+1. Install the [SDK](https://developer.leapmotion.com/sdk/v2) and extract the **LeapSDK** folder in to your home folder
+
+2. Install the ros package [leap_motion](http://wiki.ros.org/leap_motion)  
+`sudo apt-get install ros-kinetic-leap-motion`  
+
+3. After placing LeapSDK from the [SDK](https://developer.leapmotion.com/sdk/v2) archive in home directory:  
+`export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64`
+
+4. [Replace leapd.service](https://github.com/samisnotinsane/arq-teleop-robot/tree/lukas_development/modified_leapd)
+
+These instructions are also available on the ros wiki (check leap_motion under requirements)
