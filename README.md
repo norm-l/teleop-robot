@@ -6,12 +6,15 @@ Some meaningful text explaining my branch...
 
 Please check `/modified_leapd/`  
   
-**Terminal1** -> `roscore`  
-**Terminal2** -> `sudo leapd`  
-*(optional)* **Terminal3** -> `LeapControlPanel`  
-**Terminal4** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
-**Terminal5** -> `rosrun leap_motion sender.py`  
-*(optional)* **Terminal6** -> `rostopic echo /leapmotion/data | grep "palmpos" -A 3`    
+Enable Leap Motion SDK  
+**Terminal1** -> `sudo leapd`  
+Launch the program  
+**Terminal2** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
+Enable the leap_motion sender:  
+**Terminal3** -> `rosrun leap_motion sender.py`
+
+*(optional)* **Terminal** -> `LeapControlPanel`  
+*(optional)* **Terminal** -> `rostopic echo /leapmotion/data | grep "palmpos" -A 3`    
 
 # Requirements
 - [Ubuntu 16.04](http://releases.ubuntu.com/16.04/)
