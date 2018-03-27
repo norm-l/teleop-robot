@@ -6,7 +6,7 @@
     <arg name="debug" default="false" />
 
     <!-- Limited joint angles are used. Prevents complex robot configurations and makes the planner more efficient -->
-    <arg name="limited" default="true" />
+    <arg name="limited" default="false" />
 
     <!-- Load UR5 URDF file - robot description file -->
     <include file="$(find ur5_moveit_config)/launch/planning_context.launch">
