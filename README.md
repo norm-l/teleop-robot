@@ -10,8 +10,8 @@ Enable Leap Motion SDK:
 **Terminal** -> `sudo leapd`  
 Launch the program:  
 **Terminal** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
-Start roscore:
-**Terminal** -> `roscore`
+Start roscore:  
+**Terminal** -> `roscore`  
 Enable the leap_motion sender:  
 **Terminal** -> `rosrun leap_motion sender.py`
     
