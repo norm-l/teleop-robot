@@ -18,6 +18,7 @@ Please check `/modified_leapd/`
 - [Leap Motion SDK (v2 Tracking)](https://developer.leapmotion.com/sdk/v2)
 - [Robot Operating System](http://www.ros.org/)
 - [leap_motion](http://wiki.ros.org/leap_motion)
+- [Universal Robot](http://wiki.ros.org/universal_robot) **Note: Use the catkin method! We are on Ubuntu 16.04 which is ABOVE 14.04**
 
 # leap_motion Setup
 
