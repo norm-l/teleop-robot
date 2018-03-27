@@ -26,6 +26,7 @@ See the data being sent:
 - [Robot Operating System](http://www.ros.org/)
 - [leap_motion](http://wiki.ros.org/leap_motion)
 - [Universal Robot](http://wiki.ros.org/universal_robot) **Note: Use the catkin method! We are on Ubuntu 16.04 which is ABOVE 14.04**
+- [MoveIt!](http://moveit.ros.org/install/)
 
 # leap_motion Setup
 
