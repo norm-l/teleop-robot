@@ -33,3 +33,16 @@ If you're getting `Errors were encountered while processing: leap:i386` when you
 `sudo apt-get install ros-kinetic-leap-motion`  
 
 These instructions are also available on the ros wiki (check leap_motion under requirements)
+
+Note: When starting `leapd` there may be errors however for the most part they can be ignored. Here's an example of a successful run:
+
+```
+lukas@ubuntu:~/Downloads$ sudo leapd
+Configuration file not found
+Resetting /var//.Leap Motion/config.json.
+[Critical] Secure WebSocket server failed to start
+[Critical] Have you tried running as root/Administrator?
+[Critical] WebSocket server failed to start
+[Info] Leap Motion Controller detected: LP83535853740
+[Info] Firmware is up to date.
+```
