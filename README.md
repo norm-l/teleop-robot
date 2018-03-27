@@ -7,11 +7,13 @@ Some meaningful text explaining my branch...
 Please check `/modified_leapd/`  
   
 Enable Leap Motion SDK:  
-**Terminal1** -> `sudo leapd`  
+**Terminal** -> `sudo leapd`  
 Launch the program:  
-**Terminal2** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
+**Terminal** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
+Start roscore:
+**Terminal** -> `roscore`
 Enable the leap_motion sender:  
-**Terminal3** -> `rosrun leap_motion sender.py`
+**Terminal** -> `rosrun leap_motion sender.py`
     
 Control Panel from Leap Motion SDK:  
 *(optional)* **Terminal** -> `LeapControlPanel`  
