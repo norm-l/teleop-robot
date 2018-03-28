@@ -14,7 +14,6 @@ rospy.init_node('lm_move', anonymous=True)
 
 # This object is an interface to the world surrounding the robot.
 # scene = moveit_commander.PlanningSceneInterface()
-
 # This object is an interface to the robot as a whole.
 robot = moveit_commander.RobotCommander()
 # Instantiate a PlanningSceneInterface object. This object is an interface to the world surrounding the robot.
@@ -31,53 +30,59 @@ rospy.sleep(10) # Wait for rviz to initialise
 print('============ Waiting for RVIZ: DONE!')
 
 executing = False # flag to determine if we are currently executing a plan
-last_passed = 0.0 # to know what was the last passed value
+prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous passed position was
 
 def begin_plan(new_pos):
-    global last_passed
+    global prev_pos
     global executing
 
-    previous_pos = group.get_current_pose().pose.position # get the current position of the robot
-    rounding_value = 2 # how many decimal points to round
-    conversion_value = 0.001 # lower leap motion values by this much
+    dp = 3 # decimal points to round for equality check
+    curr_pos = transform_pos(new_pos) # need to transform leap motion input
 
-    if last_passed == round(zero_pos.z + (new_pos.y * conversion_value), rounding_value):
-        print "last_passed: [", last_passed, "] \n", "new: [", round(zero_pos.z + (new_pos.y * conversion_value), rounding_value), "]"
+    # there is probably a much nicer way to do this
+    prev_pos_x = round(prev_pos.x, dp)
+    curr_pos_x = round(curr_pos.x, dp)
+    prev_pos_y = round(prev_pos.y, dp)
+    curr_pos_y = round(curr_pos.y, dp)
+    prev_pos_z = round(prev_pos.z, dp)
+    curr_pos_z = round(curr_pos.z, dp)
+    check_x = prev_pos_x == curr_pos_x
+    check_y = prev_pos_y == curr_pos_y
+    check_z = prev_pos_z == curr_pos_z
+
+    if check_x or check_y or check_z:
+        print "\n=[ ERROR: Coordinates too similar! ]=\n" \
+            "Previous: ", "x:", prev_pos_x, "y:", prev_pos_y, "z:", prev_pos_z, \
+            "\nNew:      ", "x:", curr_pos_x, "y:", curr_pos_y, "z:", curr_pos_z
         return
 
-    last_passed = round(zero_pos.z + (new_pos.y * conversion_value), rounding_value)
+    prev_pos = curr_pos # keep track of this position for next iteration
+    print "============ INFO: Valid new position passed, attempting: ", curr_pos.x, curr_pos.y, curr_pos.z
 
-    """ 
-    1. z and y are switched from the input (leap motion) side because the leap motion is facing up
-    2. We multiply the leap motion input by conversion_value to ensure the positions are not too high
-    3. We check if the current robot position (x,y,z) == the new passed position (x,y,z), rounded to rounding_value 
-    """
-    previous_x = round(previous_pos.x, rounding_value) == round(zero_pos.x + (new_pos.x * conversion_value), rounding_value)
-    previous_y = round(previous_pos.y, rounding_value) == round(zero_pos.y + (new_pos.z * conversion_value), rounding_value)
-    previous_z = round(previous_pos.z, rounding_value) == round(zero_pos.z + (new_pos.y * conversion_value), rounding_value)
+    executing = True # we are now executing
+    waypoints = []
+    waypoints.append(group.get_current_pose().pose)
 
-    if previous_x or previous_y or previous_z: # if any of these equality checks are true
-        print "============ ERROR: Previous position is too close to new position!"
-    else:
-        print "============ INFO: Valid new position passed, attempting: ", (new_pos.x * conversion_value), (new_pos.y * conversion_value), (new_pos.z * conversion_value)
+    wpose = geometry_msgs.msg.Pose()
+    # wpose.orientation.w = 1.0
+    wpose.position.x = curr_pos.x
+    wpose.position.y = curr_pos.z # we switch z and y because the leap motion is faced upwards
+    wpose.position.z = curr_pos.y
+    waypoints.append(copy.deepcopy(wpose))
 
-        executing = True # we are now executing
-        waypoints = []
-        waypoints.append(group.get_current_pose().pose)
+    (plan, fraction) = group.compute_cartesian_path(
+                            waypoints,   # waypoints to follow
+                            0.01,        # eef_step
+                            0.0)         # jump_threshold
+    group.execute(plan)
+    executing = False # we are no longer executing
 
-        wpose = geometry_msgs.msg.Pose()
-        # wpose.orientation.w = 1.0
-        wpose.position.x = zero_pos.x + (new_pos.x * 0.001)
-        wpose.position.y = zero_pos.y + (new_pos.z * 0.001)
-        wpose.position.z = zero_pos.z + (new_pos.y * 0.001)
-        waypoints.append(copy.deepcopy(wpose))
-
-        (plan, fraction) = group.compute_cartesian_path(
-                             waypoints,   # waypoints to follow
-                             0.01,        # eef_step
-                             0.0)         # jump_threshold
-        group.execute(plan)
-        executing = False # we are no longer executing
+def transform_pos(pos):
+    conversion_value = 0.001 # lower leap motion values by this much
+    pos.x = zero_pos.x + (pos.x * conversion_value)
+    pos.y = zero_pos.y + (pos.y * conversion_value)
+    pos.z = zero_pos.z + (pos.z * conversion_value)
+    return pos
 
 
 def lm_move(leap_msg):
