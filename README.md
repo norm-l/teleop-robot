@@ -4,8 +4,6 @@ Some meaningful text explaining my branch...
 
 # 1. Requirements  
 
-**Make sure you have all of these before moving on**  
-
 - [Ubuntu 16.04](http://releases.ubuntu.com/16.04/)
 - [Leap Motion SDK (v2 Tracking)](https://developer.leapmotion.com/sdk/v2)
 - [Robot Operating System](http://www.ros.org/)
