@@ -30,7 +30,9 @@ These instructions are also available on the ros wiki (check leap_motion under r
 
 1. Navigate to `~/catkin_ws/src` or wherever your `catkin_ws` folder is located.
 2. `git clone https://github.com/samisnotinsane/arq-teleop-robot.git`
-3. Navigate to `~/catkin_ws/src/arq-teleop-robot/launch` and continue with the below.
+3. Navigate to `~/catkin_ws/src/arq-teleop-robot/launch` and continue with the below.  
+
+You might need to `catkin_make` before attempting to launch.
 
 # 4. Starting
 
