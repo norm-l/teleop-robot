@@ -2,25 +2,10 @@
 
 Some meaningful text explaining my branch...
 
-# Starting
+# 1. Requirements  
 
-Please check `/modified_leapd/`  
-  
-Enable Leap Motion SDK:  
-**Terminal** -> `sudo leapd`  
-Launch the program:  
-**Terminal** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  
-Start roscore:  
-**Terminal** -> `roscore`  
-Enable the leap_motion sender:  
-**Terminal** -> `rosrun leap_motion sender.py`
-    
-Control Panel from Leap Motion SDK:  
-*(optional)* **Terminal** -> `LeapControlPanel`  
-See the data being sent:  
-*(optional)* **Terminal** -> `rostopic echo /leapmotion/data | grep "palmpos" -A 3`    
+**Make sure you have all of these before moving on**  
 
-# Requirements
 - [Ubuntu 16.04](http://releases.ubuntu.com/16.04/)
 - [Leap Motion SDK (v2 Tracking)](https://developer.leapmotion.com/sdk/v2)
 - [Robot Operating System](http://www.ros.org/)
@@ -28,7 +13,7 @@ See the data being sent:
 - [Universal Robot](http://wiki.ros.org/universal_robot) **Note: Use the catkin method! We are on Ubuntu 16.04 which is ABOVE 14.04**
 - [MoveIt!](http://moveit.ros.org/install/)
 
-# leap_motion Setup
+# 2. leap_motion Setup
 
 1. [Replace leapd.service](https://github.com/samisnotinsane/arq-teleop-robot/tree/lukas_development/modified_leapd)
 
@@ -42,3 +27,27 @@ If you're getting `Errors were encountered while processing: leap:i386` when you
 `sudo apt-get install ros-kinetic-leap-motion`  
 
 These instructions are also available on the ros wiki (check leap_motion under requirements)
+
+# 3. Cloning this branch
+
+1. Navigate to `~/catkin_ws/src` or wherever your `catkin_ws` folder is located.
+2. `git clone https://github.com/samisnotinsane/arq-teleop-robot.git`
+3. Navigate to `~/catkin_ws/src/arq-teleop-robot/launch` and continue with the below.
+
+# 4. Starting
+
+Please check `/modified_leapd/`  
+  
+Enable Leap Motion SDK:  
+**Terminal** -> `sudo leapd`  
+Launch the program:  
+**Terminal** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  (when in the launch directory)
+Start roscore:  
+**Terminal** -> `roscore`  
+Enable the leap_motion sender:  
+**Terminal** -> `rosrun leap_motion sender.py`
+    
+Control Panel from Leap Motion SDK:  
+*(optional)* **Terminal** -> `LeapControlPanel`  
+See the data being sent:  
+*(optional)* **Terminal** -> `rostopic echo /leapmotion/data | grep "palmpos" -A 3`    
