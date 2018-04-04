@@ -34,7 +34,6 @@ prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous p
 
 # since the initial diff checker would always be true 
 # (0.0 - x) > y meaning a large initial value would always be greater than the check as we are removing it from 0.0
-
 initial_pos_x = 0.600
 initial_pos_y = 0.600
 initial_pos_z = 0.100
@@ -50,7 +49,6 @@ def begin_plan(new_pos):
     dp = 3 # decimal points to round for equality check
     curr_pos = transform_pos(new_pos) # need to transform leap motion input
 
-    # there is probably a much nicer way to do this
     prev_pos_x = round(prev_pos.x, dp)
     curr_pos_x = round(curr_pos.x, dp)
     prev_pos_y = round(prev_pos.y, dp)
@@ -60,12 +58,18 @@ def begin_plan(new_pos):
 
     pos_diff = 0.100
 
-    max_xl = initial_pos_x - 0.100
-    max_xr = initial_pos_x + 0.100
-    max_y = initial_pos_y + 0.300 # doesn't matter how low
-    max_zd = initial_pos_z + 0.200
-    max_zu = initial_pos_z - 0.100
+    max_xl = initial_pos_x - 0.100 # left
+    max_xr = initial_pos_x + 0.100 # right
+    max_y = initial_pos_y + 0.300 # height up
+    max_zd = initial_pos_z + 0.200 # down
+    max_zu = initial_pos_z - 0.100 # up
 
+    '''
+    We check 3 things:
+    1. If the passed position is very similar to the current one (avoid duplicates)
+    2. If the difference is larger than pos_diff (avoid large movements)
+    3. If the new position exceeds the boundaries set
+    '''
     check_x = prev_pos_x == curr_pos_x \
         or abs(prev_pos_x - curr_pos_x) > pos_diff \
         or abs(curr_pos_x) > max_xr \
@@ -79,7 +83,7 @@ def begin_plan(new_pos):
         or abs(curr_pos_z) < max_zu
 
     if check_x or check_y or check_z:
-        print "\n=[ ERROR: Coordinates too similar or too big of a change! ]=\n" \
+        print "\n=[ ERROR: Coordinates too similar, too different or exceed boundaries ]=\n" \
             "Previous: ", "x:", prev_pos_x, "y:", prev_pos_y, "z:", prev_pos_z, \
             "\nNew:      ", "x:", curr_pos_x, "y:", curr_pos_y, "z:", curr_pos_z
         return
@@ -103,7 +107,6 @@ def begin_plan(new_pos):
                             0.01,        # eef_step
                             0.0)         # jump_threshold
     group.execute(plan)
-    print group.get_current_joint_values()
     executing = False # we are no longer executing
 
 def transform_pos(pos):
@@ -130,7 +133,12 @@ def lm_listener():
 if __name__ == '__main__':
     try:
         # move the robot to an initial comfortable position
-        values = [4.111435176058169, 2.715653621728593, 0.7256647920137681, 5.983459446005512, -5.682231515319553, -6.283185179581844]
+        values = [4.111435176058169, 
+                  2.715653621728593, 
+                  0.7256647920137681, 
+                  5.983459446005512, 
+                  -5.682231515319553, 
+                  -6.283185179581844]
         group.set_joint_value_target(values)
         plan = group.plan()
         group.execute(plan)
