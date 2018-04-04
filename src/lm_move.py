@@ -27,7 +27,7 @@ display_trajectory_publisher = rospy.Publisher(
                                     queue_size=1)
 
 rospy.sleep(10) # Wait for rviz to initialise
-print('============ Waiting for RVIZ: DONE!')
+print "\n=[ INFO: Waiting for RVIZ: DONE! ]=\n"
 
 executing = False # flag to determine if we are currently executing a plan
 prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous passed position was
@@ -56,11 +56,11 @@ def begin_plan(new_pos):
     prev_pos_z = round(prev_pos.z, dp)
     curr_pos_z = round(curr_pos.z, dp)
 
-    pos_diff = 0.100
+    pos_diff = 0.050
 
     max_xl = initial_pos_x - 0.100 # left
     max_xr = initial_pos_x + 0.100 # right
-    max_y = initial_pos_y + 0.300 # height up
+    max_y = initial_pos_y + 0.200 # height up
     max_zd = initial_pos_z + 0.200 # down
     max_zu = initial_pos_z - 0.100 # up
 
