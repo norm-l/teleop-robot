@@ -32,6 +32,12 @@ print('============ Waiting for RVIZ: DONE!')
 executing = False # flag to determine if we are currently executing a plan
 prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous passed position was
 
+# since the initial diff checker would always be true 
+# (0.0 - x) > y meaning a large initial value would always be greater than the check as we are removing it from 0.0
+prev_pos.x = 0.66
+prev_pos.y = -0.041
+prev_pos.z = 0.39
+
 def begin_plan(new_pos):
     global prev_pos
     global executing
@@ -46,12 +52,21 @@ def begin_plan(new_pos):
     curr_pos_y = round(curr_pos.y, dp)
     prev_pos_z = round(prev_pos.z, dp)
     curr_pos_z = round(curr_pos.z, dp)
-    check_x = prev_pos_x == curr_pos_x
-    check_y = prev_pos_y == curr_pos_y
-    check_z = prev_pos_z == curr_pos_z
+
+    pos_diff = 0.100
+    check_x = prev_pos_x == curr_pos_x \
+        or abs(prev_pos_x - curr_pos_x) > pos_diff
+    check_y = prev_pos_y == curr_pos_y \
+        or abs(prev_pos_y - curr_pos_y) > pos_diff
+    check_z = prev_pos_z == curr_pos_z \
+        or abs(prev_pos_z - curr_pos_z) > pos_diff
+
+    print "X: ", abs(prev_pos_x - curr_pos_x), ">", pos_diff, check_x
+    print "Y: ", abs(prev_pos_y - curr_pos_y), ">", pos_diff, check_y
+    print "Z: ", abs(prev_pos_z - curr_pos_z), ">", pos_diff, check_z
 
     if check_x or check_y or check_z:
-        print "\n=[ ERROR: Coordinates too similar! ]=\n" \
+        print "\n=[ ERROR: Coordinates too similar or too big of a change! ]=\n" \
             "Previous: ", "x:", prev_pos_x, "y:", prev_pos_y, "z:", prev_pos_z, \
             "\nNew:      ", "x:", curr_pos_x, "y:", curr_pos_y, "z:", curr_pos_z
         return
