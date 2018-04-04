@@ -34,9 +34,14 @@ prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous p
 
 # since the initial diff checker would always be true 
 # (0.0 - x) > y meaning a large initial value would always be greater than the check as we are removing it from 0.0
-prev_pos.x = 0.66
-prev_pos.y = -0.041
-prev_pos.z = 0.39
+
+initial_pos_x = 0.600
+initial_pos_y = 0.600
+initial_pos_z = 0.100
+
+prev_pos.x = initial_pos_x
+prev_pos.y = initial_pos_y
+prev_pos.z = initial_pos_z
 
 def begin_plan(new_pos):
     global prev_pos
@@ -54,16 +59,24 @@ def begin_plan(new_pos):
     curr_pos_z = round(curr_pos.z, dp)
 
     pos_diff = 0.100
-    check_x = prev_pos_x == curr_pos_x \
-        or abs(prev_pos_x - curr_pos_x) > pos_diff
-    check_y = prev_pos_y == curr_pos_y \
-        or abs(prev_pos_y - curr_pos_y) > pos_diff
-    check_z = prev_pos_z == curr_pos_z \
-        or abs(prev_pos_z - curr_pos_z) > pos_diff
 
-    print "X: ", abs(prev_pos_x - curr_pos_x), ">", pos_diff, check_x
-    print "Y: ", abs(prev_pos_y - curr_pos_y), ">", pos_diff, check_y
-    print "Z: ", abs(prev_pos_z - curr_pos_z), ">", pos_diff, check_z
+    max_xl = initial_pos_x - 0.100
+    max_xr = initial_pos_x + 0.100
+    max_y = initial_pos_y + 0.300 # doesn't matter how low
+    max_zd = initial_pos_z + 0.200
+    max_zu = initial_pos_z - 0.100
+
+    check_x = prev_pos_x == curr_pos_x \
+        or abs(prev_pos_x - curr_pos_x) > pos_diff \
+        or abs(curr_pos_x) > max_xr \
+        or abs(curr_pos_x) < max_xl
+    check_y = prev_pos_y == curr_pos_y \
+        or abs(prev_pos_y - curr_pos_y) > pos_diff \
+        or abs(curr_pos_y) > max_y
+    check_z = prev_pos_z == curr_pos_z \
+        or abs(prev_pos_z - curr_pos_z) > pos_diff \
+        or abs(curr_pos_z) > max_zd \
+        or abs(curr_pos_z) < max_zu
 
     if check_x or check_y or check_z:
         print "\n=[ ERROR: Coordinates too similar or too big of a change! ]=\n" \
@@ -72,7 +85,7 @@ def begin_plan(new_pos):
         return
 
     prev_pos = curr_pos # keep track of this position for next iteration
-    print "============ INFO: Valid new position passed, attempting: ", curr_pos.x, curr_pos.y, curr_pos.z
+    print "\n=[ INFO: Valid new position passed, attempting: ", curr_pos.x, curr_pos.y, curr_pos.z, "]=\n"
 
     executing = True # we are now executing
     waypoints = []
@@ -90,6 +103,7 @@ def begin_plan(new_pos):
                             0.01,        # eef_step
                             0.0)         # jump_threshold
     group.execute(plan)
+    print group.get_current_joint_values()
     executing = False # we are no longer executing
 
 def transform_pos(pos):
@@ -116,7 +130,7 @@ def lm_listener():
 if __name__ == '__main__':
     try:
         # move the robot to an initial comfortable position
-        values = [3.25,-3.30,1.44,-3.0,-0.11,0.70]
+        values = [4.111435176058169, 2.715653621728593, 0.7256647920137681, 5.983459446005512, -5.682231515319553, -6.283185179581844]
         group.set_joint_value_target(values)
         plan = group.plan()
         group.execute(plan)
