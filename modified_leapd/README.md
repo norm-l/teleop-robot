@@ -1,4 +1,4 @@
-You will need sudo to replace both (i.e. sudo cp)
+You will need sudo to replace the file (i.e. sudo cp)
 
 # leapd.service (required)
 This file has been replaced in: `/lib/systemd/system`  
