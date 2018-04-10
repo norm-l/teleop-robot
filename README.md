@@ -15,7 +15,7 @@ Some meaningful text explaining my branch...
 
 1. [Replace leapd.service](https://github.com/samisnotinsane/arq-teleop-robot/tree/lukas_development/modified_leapd)
 
-2. Install the [SDK](https://developer.leapmotion.com/sdk/v2) 
+2. Install the [SDK](https://developer.leapmotion.com/sdk/v2)  
 If you're getting `Errors were encountered while processing: leap:i386` when you try to install (e.g. `sudo dpkg -i Leap-2.3.1+31549-x86.deb`) it means you have not done step 1.
 
 3. From the SDK archive you downloaded and installed in Step 1 extract `LeapSDK` folder in to your home directory
