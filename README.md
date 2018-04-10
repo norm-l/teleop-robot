@@ -15,13 +15,14 @@ Some meaningful text explaining my branch...
 
 1. [Replace leapd.service](https://github.com/samisnotinsane/arq-teleop-robot/tree/lukas_development/modified_leapd)
 
-2. Install the [SDK](https://developer.leapmotion.com/sdk/v2) and extract the **LeapSDK** folder in to your home folder  
-If you're getting `Errors were encountered while processing: leap:i386` when you try to install (e.g. `sudo dpkg -i Leap-2.3.1+31549-x86.deb`) it means you have not done step 1.
+2. Install the [SDK](https://developer.leapmotion.com/sdk/v2). If you're getting `Errors were encountered while processing: leap:i386` when you try to install (e.g. `sudo dpkg -i Leap-2.3.1+31549-x86.deb`) it means you have not done step 1.
 
-3. After placing LeapSDK from the [SDK](https://developer.leapmotion.com/sdk/v2) archive in home directory:  
+3. From the SDK archive you downloaded and installed in Step 1 extract `LeapSDK` folder in to your home directory
+
+4. After placing `LeapSDK` folder from the [SDK](https://developer.leapmotion.com/sdk/v2) archive in home directory:  
 `export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64`
 
-4. Install the ros package [leap_motion](http://wiki.ros.org/leap_motion)  
+5. Install the ros package [leap_motion](http://wiki.ros.org/leap_motion)  
 `sudo apt-get install ros-kinetic-leap-motion`  
 
 These instructions are also available on the ros wiki (check leap_motion under requirements)
@@ -32,7 +33,7 @@ These instructions are also available on the ros wiki (check leap_motion under r
 2. `git clone https://github.com/samisnotinsane/arq-teleop-robot.git`
 3. Navigate to `~/catkin_ws/src/arq-teleop-robot/launch` and continue with the below.  
 
-You might need to `catkin_make` before attempting to launch.
+You might need to `catkin_make` before attempting to launch
 
 # 4. Starting
 
@@ -40,12 +41,12 @@ Please check `/modified_leapd/`
   
 Enable Leap Motion SDK:  
 **Terminal** -> `sudo leapd`  
-Launch the program:  
-**Terminal** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  (when in the launch directory)
 Start roscore:  
 **Terminal** -> `roscore`  
 Enable the leap_motion sender:  
 **Terminal** -> `rosrun leap_motion sender.py`
+Launch the program:  
+**Terminal** -> `source ~/catkin_ws/devel/setup.bash && roslaunch ur5_lm_move.launch`  (when in the launch directory)
     
 Control Panel from Leap Motion SDK:  
 *(optional)* **Terminal** -> `LeapControlPanel`  
