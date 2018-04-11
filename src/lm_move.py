@@ -8,6 +8,7 @@ import geometry_msgs.msg
 import shape_msgs.msg
 from leap_motion.msg import leapros
 from std_msgs.msg import String
+import Tkinter as tk
 
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node('lm_move', anonymous=True)
@@ -27,8 +28,9 @@ display_trajectory_publisher = rospy.Publisher(
                                     queue_size=1)
 
 rospy.sleep(10) # Wait for rviz to initialise
-print "\n=[ INFO: Waiting for RVIZ: DONE! ]=\n"
+print("\n=[ INFO: Waiting for RVIZ: DONE! ]=\n")
 
+paused = False
 executing = False # flag to determine if we are currently executing a plan
 prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous passed position was
 
@@ -58,6 +60,7 @@ def begin_plan(new_pos):
 
     pos_diff = 0.050
 
+    #TODO: Change the boundaries to be from robots POV, not the hand
     max_xl = initial_pos_x - 0.100 # left
     max_xr = initial_pos_x + 0.100 # right
     max_y = initial_pos_y + 0.200 # height up
@@ -83,20 +86,19 @@ def begin_plan(new_pos):
         or abs(curr_pos_z) < max_zu
 
     if check_x or check_y or check_z:
-        print "\n=[ ERROR: Coordinates too similar, too different or exceed boundaries ]=\n" \
+        print("\n=[ ERROR: Coordinates too similar, too different or exceed boundaries ]=\n" \
             "Previous: ", "x:", prev_pos_x, "y:", prev_pos_y, "z:", prev_pos_z, \
-            "\nNew:      ", "x:", curr_pos_x, "y:", curr_pos_y, "z:", curr_pos_z
+            "\nNew:      ", "x:", curr_pos_x, "y:", curr_pos_y, "z:", curr_pos_z)
         return
 
     prev_pos = curr_pos # keep track of this position for next iteration
-    print "\n=[ INFO: Valid new position passed, attempting: ", curr_pos.x, curr_pos.y, curr_pos.z, "]=\n"
+    print("\n=[ INFO: Valid new position passed, attempting: ", curr_pos.x, curr_pos.y, curr_pos.z, "]=\n")
 
     executing = True # we are now executing
     waypoints = []
     waypoints.append(group.get_current_pose().pose)
 
     wpose = geometry_msgs.msg.Pose()
-    # wpose.orientation.w = 1.0
     wpose.position.x = curr_pos.x
     wpose.position.y = curr_pos.z # we switch z and y because the leap motion is faced upwards
     wpose.position.z = curr_pos.y
@@ -124,11 +126,27 @@ def lm_move(leap_msg):
         if any(x > 0.0 for x in pos_list): # avoid passing (0.0,0.0,0.0)
             begin_plan(lm_palm_pos)
 
+def start_thread(*ignore):
+    rospy.rostime.wallsleep(0.5)
+    if paused: 
+        print("\n=[ INFO: Paused! ]=\n")
+    else:
+        lm_listener()
+    root.after(1, start_thread)
+
+def tracking_control(*ignore):
+    global paused
+    if paused:
+        controlBtn_text.set("Pause")
+        controlBtn.configure(bg="yellow")
+        paused = False
+    else:
+        controlBtn_text.set("Resume")
+        controlBtn.configure(bg="green")
+        paused = True
 
 def lm_listener():
     rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1) # Subscribe to the topic and call lm_move each time we receive some input
-    rospy.spin() # Do this infinite amount of times
-
 
 if __name__ == '__main__':
     try:
@@ -143,9 +161,29 @@ if __name__ == '__main__':
         plan = group.plan()
         group.execute(plan)
         rospy.sleep(3)
+
         # save this position to be used later
         zero_pos = group.get_current_pose().pose.position
-        # call the listener method
-        lm_listener()
+
+        # create a root and hide it
+        root = tk.Tk()
+        root.attributes('-alpha', 0.0)
+        root.iconify()
+
+        # create a window for the button
+        window = tk.Toplevel(root)
+        window.geometry("100x100")
+        window.overrideredirect(1)
+
+        # create a button
+        controlBtn_text = tk.StringVar()
+        controlBtn = tk.Button(window, textvariable=controlBtn_text, command=tracking_control)
+        controlBtn_text.set("Pause")
+        controlBtn.configure(bg="yellow")
+        controlBtn.pack(fill=tk.BOTH, expand=1)
+
+        # idefinite loop
+        root.after(1, start_thread)
+        window.mainloop()
     except rospy.ROSInterruptException:
         pass
