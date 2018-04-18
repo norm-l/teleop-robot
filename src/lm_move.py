@@ -12,7 +12,7 @@ import Tkinter as tk
 import tkMessageBox
 
 moveit_commander.roscpp_initialize(sys.argv)
-rospy.init_node('lm_move', anonymous=True)
+rospy.init_node('beginExecution', anonymous=True)
 
 # This object is an interface to the robot as a whole.
 robot = moveit_commander.RobotCommander()
@@ -29,116 +29,138 @@ display_trajectory_publisher = rospy.Publisher(
 rospy.sleep(10) # Wait for rviz to initialise
 print "\n=[ INFO: Waiting for RVIZ: DONE! ]=\n"
 
-sub = None # we need to have the subscriber as an object so we can unregister/register when paused/resumed
-resumed_run = False # flag to determine if it is the first run after pressing 'resume'
-paused = False # flag to determine if program is paused
+subscriber = None # we need to have the subscriberscriber as an object so we can unregister/register when paused/resumed
+resumedRun = False # flag to determine if it is the first run after pressing 'resume'
+paused = True # flag to determine if program is paused
 executing = False # flag to determine if we are currently executing a plan
-prev_pos = geometry_msgs.msg.Pose().position # keep track of what the previous passed position was
-zero_pos = geometry_msgs.msg.Pose().position # keep track of the zero position
-win_hidden = True # keep track if zero pos window is hidden or not
+gui_positionInfo_hidden = True # keep track if zero pos window is hidden or not
+prev_desiredPos = geometry_msgs.msg.Pose().position # keep track of what the previous passed position was
+robot_zeroPos = geometry_msgs.msg.Pose().position # keep track of the robot zero position
+hand_zeroPos = geometry_msgs.msg.Pose().position # keep track of the hand zero position
+robot_initialPos = geometry_msgs.msg.Pose().position # keep track of the robot starting position
 
 
-def begin_plan(new_pos):
-    global prev_pos
+def begin_plan(hand_pos):
+    global prev_desiredPos
+    global robot_zeroPos
+    global hand_zeroPos
     global executing
-    global resumed_run
-    global zero_pos
+    global resumedRun
 
     # check if this is the first run after a resume
-    if resumed_run:
-        old_zeroPosLbl_text.set("Old Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (zero_pos.x, zero_pos.y, zero_pos.z))
-        zero_pos.x = group.get_current_pose().pose.position.x
-        zero_pos.y = group.get_current_pose().pose.position.z
-        zero_pos.z = group.get_current_pose().pose.position.y
-        zeroPosLbl_text.set("Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (zero_pos.x, zero_pos.y, zero_pos.z))
-        resumed_run = False
-
-    # boundaries
-    max_xl = start_pos.x - 0.150 # x left
-    max_xr = start_pos.x + 0.300 # x right
-    max_y = start_pos.y + 0.300 # y up
-    max_zd = start_pos.z + 0.150 # z down
-    max_zu = start_pos.z - 0.110 # z up
+    if resumedRun:
+        # display previous zero positions
+        prev_hand_zeroPosText.set("Previous Robot Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
+            % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
+        prev_robot_ZeroPosText.set("Previous Hand Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
+            % (hand_zeroPos.x, hand_zeroPos.y, hand_zeroPos.z))
+        # set the updated zero positions
+        robot_zeroPos.x = group.get_current_pose().pose.position.x
+        robot_zeroPos.y = group.get_current_pose().pose.position.z
+        robot_zeroPos.z = group.get_current_pose().pose.position.y
+        hand_zeroPos.x = hand_pos.x
+        hand_zeroPos.y = hand_pos.y
+        hand_zeroPos.z = hand_pos.z
+        # display updated zero positions
+        hand_zeroPosText.set("Hand Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
+            % (hand_zeroPos.x, hand_zeroPos.y, hand_zeroPos.z))
+        robot_ZeroPosText.set("Robot Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
+            % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
+        resumedRun = False
 
     # need to transform leap motion input
-    curr_pos = transform_pos(new_pos)
+    desiredPos = getDesiredPos(hand_pos)
+
+    # boundaries
+    # initial coords: x: 0.603 y: 0.124 z: 0.566
+    maxLeft = robot_initialPos.x - 0.070 # x left
+    maxRight = robot_initialPos.x + 0.070 # x right
+    maxHeight = robot_initialPos.y + 0.300 # y up
+    maxUp = robot_initialPos.z + 0.100 # z up
+    maxDown = robot_initialPos.z - 0.080 # z down
 
     dp = 3 # decimal points
     # we round the positions so it is much easier to carry out checks
-    prev_pos_x = round(prev_pos.x, dp)
-    curr_pos_x = round(curr_pos.x, dp)
-    prev_pos_y = round(prev_pos.y, dp)
-    curr_pos_y = round(curr_pos.y, dp)
-    prev_pos_z = round(prev_pos.z, dp)
-    curr_pos_z = round(curr_pos.z, dp)
+    prev_desiredPos_x = round(prev_desiredPos.x, dp)
+    desiredPos_x = round(desiredPos.x, dp)
+    prev_desiredPos_y = round(prev_desiredPos.y, dp)
+    desiredPos_y = round(desiredPos.y, dp)
+    prev_desiredPos_z = round(prev_desiredPos.z, dp)
+    desiredPos_z = round(desiredPos.z, dp)
 
     '''
     We check 3 things:
     1. If the passed position is very similar to the current one (avoid duplicates)
-    2. If the difference is larger than pos_diff (avoid large movements)
+    2. If the difference is larger than maxDiff (avoid large movements)
     3. If the new position exceeds the boundaries set
     '''
 
     # check if duplicate
-    ch_duplicate = prev_pos_x == curr_pos_x \
-        or prev_pos_y == curr_pos_y \
-        or prev_pos_z == curr_pos_z
+    duplicateCheck = prev_desiredPos_x == desiredPos_x \
+        or prev_desiredPos_y == desiredPos_y \
+        or prev_desiredPos_z == desiredPos_z
 
-    if ch_duplicate:
-        errorLbl_text.set("Co-ordinates are too close!\n\
+    if duplicateCheck:
+        errorText.set("Co-ordinates are too close!\n\
         Old Values: x: %.3f | y: %.3f | z: %.3f\n \
         New Values: x: %.3f | y: %.3f | z: %.3f\n" \
-            % (prev_pos_x, prev_pos_y, prev_pos_z,
-                curr_pos_x, curr_pos_y, curr_pos_z))
+            % (prev_desiredPos_x, prev_desiredPos_y, prev_desiredPos_z,
+                desiredPos_x, desiredPos_y, desiredPos_z))
         return
 
     # check if exceeding boundaries
-    ch_boundary_x = curr_pos_x > max_xr \
-        or curr_pos_x < max_xl
-    ch_boundary_y = curr_pos_y > max_y
-    ch_boundary_z = curr_pos_z > max_zd \
-        or curr_pos_z < max_zu
+    boundaryCheck_x = desiredPos_x > maxRight \
+        or desiredPos_x < maxLeft
+    boundaryCheck_y = desiredPos_y > maxHeight
+    boundaryCheck_z = desiredPos_z > maxUp \
+        or desiredPos_z < maxDown
 
-    if ch_boundary_x or ch_boundary_y or ch_boundary_z:
-        posLbl_text.set("Current Position\nx: %.3f | %s \ny: %.3f | %s\nz: %.3f | %s" \
-            % (curr_pos.x, ch_boundary_x, curr_pos.y, ch_boundary_y, curr_pos.z, ch_boundary_z))
-        errorLbl_text.set("Boundaries reached!\ni.e. True next to x means the boundary for x was reached")
+    if boundaryCheck_x or boundaryCheck_y or boundaryCheck_z:
+        currentPosText.set("Current Position\nx: %.3f | %s \ny: %.3f | %s\nz: %.3f | %s" \
+            % (desiredPos.x, boundaryCheck_x, desiredPos.y, boundaryCheck_y, desiredPos.z, boundaryCheck_z))
+        errorText.set("Boundaries reached!\ni.e. True next to x means the boundary for x was reached")
         return
 
     # check if difference too high
-    arr_prevpos = [prev_pos_x, prev_pos_y, prev_pos_z]
-    if any(x > 0.0 for x in arr_prevpos):
-        pos_diff = 0.100
-        ch_diff_x = abs(prev_pos_x - curr_pos_x) > pos_diff
-        ch_diff_y = abs(prev_pos_y - curr_pos_y) > pos_diff
-        ch_diff_z = abs(prev_pos_z - curr_pos_z) > pos_diff
-        if ch_diff_x or ch_diff_y or ch_diff_z:
-            errorLbl_text.set("Too large of a difference!\n\
+    prevPosArray = [prev_desiredPos_x, prev_desiredPos_y, prev_desiredPos_z]
+    # avoid checking if there is no previous position
+    if any(x > 0.0 for x in prevPosArray):
+        # maximum difference we will accept
+        maxDiff = 0.100
+        diffCheck_x = abs(prev_desiredPos_x - desiredPos_x) > maxDiff
+        diffCheck_y = abs(prev_desiredPos_y - desiredPos_y) > maxDiff
+        diffCheck_z = abs(prev_desiredPos_z - desiredPos_z) > maxDiff
+        if diffCheck_x or diffCheck_y or diffCheck_z:
+            errorText.set("Too large of a difference!\n\
             Old Values: x: %.3f | y: %.3f | z: %.3f\n \
             New Values: x: %.3f | y: %.3f | z: %.3f\n \
             Problem is with: x: %s | y: %s | z: %s" \
-                % (prev_pos_x, prev_pos_y, prev_pos_z,
-                    curr_pos_x, curr_pos_y, curr_pos_z,
-                    ch_diff_x, ch_diff_y, ch_diff_z))
+                % (prev_desiredPos_x, prev_desiredPos_y, prev_desiredPos_z,
+                    desiredPos_x, desiredPos_y, desiredPos_z,
+                    diffCheck_x, diffCheck_y, diffCheck_z))
             return
 
     # clear any previous error set as in this run all checks are false
-    errorLbl_text.set("")
-
-    # keep track of previous position
-    prev_pos = curr_pos
-    # all checks equate to false thus this is a valid attempt
-    print "\n=[ INFO: Valid new position passed, attempting: ", curr_pos_x, curr_pos_y, curr_pos_z, "]=\n"
+    errorText.set("")
     # we are now executing
     executing = True
+    # keep track of previous position
+    prev_desiredPos.x = desiredPos.x
+    prev_desiredPos.y = desiredPos.y
+    prev_desiredPos.z = desiredPos.z
+    # all checks equate to false thus this is a valid attempt
+    print "\n===> ATTEMPT: ", desiredPos.x, desiredPos.y, desiredPos.z
+    # update the current position
+    currentPosText.set("Current Position\nx: %.3f\ny: %.3f\nz: %.3f" % (desiredPos.x, desiredPos.y, desiredPos.z))
+    
     # append current pose to the waypoints array
     waypoints = []
     waypoints.append(group.get_current_pose().pose)
     # set the pose for x, y and z
     wpose = geometry_msgs.msg.Pose()
-    wpose.position.x = curr_pos.x
-    wpose.position.y = curr_pos.z # we switch z and y because the leap motion is faced upwards
-    wpose.position.z = curr_pos.y
+    wpose.position.x = desiredPos.x
+    wpose.position.y = desiredPos.z # we switch z and y because the leap motion is faced upwards
+    wpose.position.z = desiredPos.y
     waypoints.append(copy.deepcopy(wpose))
     # plan the movement
     (plan, fraction) = group.compute_cartesian_path(
@@ -149,151 +171,170 @@ def begin_plan(new_pos):
     group.execute(plan)
     # we are no longer executing
     executing = False
-    # update label text
-    posLbl_text.set("Current Position\nx: %.3f\ny: %.3f\nz: %.3f" % (curr_pos.x, curr_pos.y, curr_pos.z))
-    zeroPosLbl_text.set("Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (zero_pos.x, zero_pos.y, zero_pos.z))
 
 
-def transform_pos(pos):
-    global zero_pos
+def getDesiredPos(hand_pos):
+    global robot_zeroPos
+    global hand_zeroPos
     # lower leap motion values by this much
-    conversion_value = 0.001
+    conversion_value = 0.0005
     # adjust the offset and pass back the new coordinates
-    pos.x = zero_pos.x - (pos.x * conversion_value) # inverted
-    pos.y = zero_pos.y + (pos.y * conversion_value)
-    pos.z = zero_pos.z + (pos.z * conversion_value)
-    return pos
+    desired_pos = geometry_msgs.msg.Pose().position
+    desired_pos.x = robot_zeroPos.x - ((hand_pos.x - hand_zeroPos.x) * conversion_value) # inverted
+    desired_pos.y = robot_zeroPos.y + ((hand_pos.y - hand_zeroPos.y) * conversion_value)
+    desired_pos.z = robot_zeroPos.z + ((hand_pos.z - hand_zeroPos.z) * conversion_value)
+    return desired_pos
 
 
-def lm_move(leap_msg):
+def beginExecution(leap_msg):
     global paused
     if not executing and not paused:
         # store xyz information in a variable
-        lm_palm_pos = leap_msg.palmpos
+        palmPos = leap_msg.palmpos
         # create an array of the xyz
-        pos_list = [lm_palm_pos.x, lm_palm_pos.y, lm_palm_pos.z]
+        posArray = [palmPos.x, palmPos.y, palmPos.z]
         # check if x,y,z is > than 0.0 (avoid passing 0.0 coordinates)
-        if any(x > 0.0 for x in pos_list):
-            begin_plan(lm_palm_pos)
+        if any(x > 0.0 for x in posArray):
+            begin_plan(palmPos)
         
 
-def tracking_control(*ignore):
+def trackingControl(*ignore):
     global paused
-    global sub
-    global resumed_run
+    global subscriber
+    global resumedRun
     if paused:
         # adjust button text/colour
-        controlBtn_text.set("Pause")
-        controlBtn.configure(bg="yellow")
+        pauseButtonText.set("Pause")
+        pauseButton.configure(bg="yellow")
         # adjust global flags
         paused = False
-        resumed_run = True
+        resumedRun = True
         # register back to the topic
-        lm_listener()
+        subscribeToTopic()
     else:
         # unregister from the topic
-        sub.unregister()
+        subscriber.unregister()
         # adjust button text/colour
-        controlBtn_text.set("Resume")
-        controlBtn.configure(bg="green")
+        pauseButtonText.set("Resume")
+        pauseButton.configure(bg="green")
         # adjust global flag
         paused = True
 
 
-def show_zeropos_win(*ignore):
-    global win_hidden
-    if win_hidden:
-        window.deiconify()
-        win_hidden = False
+def toggleInfoWindow(*ignore):
+    global gui_positionInfo_hidden
+    if gui_positionInfo_hidden:
+        gui_positionInfo.deiconify()
+        gui_positionInfo_hidden = False
     else:
-        window.withdraw()
-        win_hidden = True
+        gui_positionInfo.withdraw()
+        gui_positionInfo_hidden = True
 
 
-def reset_zeropos(*ignore):
-    global zero_pos
-    zero_pos = start_pos
-    zeroPosLbl_text.set("Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (zero_pos.x, zero_pos.y, zero_pos.z))
+def resetZeroPos(*ignore):
+    global robot_zeroPos
+    global robot_initialPos
+    robot_zeroPos.x = robot_initialPos.x
+    robot_zeroPos.y = robot_initialPos.y
+    robot_zeroPos.z = robot_initialPos.z
+    robot_ZeroPosText.set("Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
 
 
-def lm_listener():
-    global sub
+def subscribeToTopic():
+    global subscriber
     # register to the topic
-    sub = rospy.Subscriber("/leapmotion/data", leapros, lm_move, queue_size=1)
+    subscriber = rospy.Subscriber("/leapmotion/data", leapros, beginExecution, queue_size=1)
 
 
 if __name__ == '__main__':
     try:
         # move the robot to an initial comfortable position
-        values = [4.111435176058169, 
+        initialJointValues = [4.111435176058169, 
                   2.715653621728593, 
                   0.7256647920137681, 
                   5.983459446005512, 
                   -5.682231515319553, 
                   -6.283185179581844]
-        group.set_joint_value_target(values)
+        group.set_joint_value_target(initialJointValues)
         plan = group.plan()
         group.execute(plan)
         rospy.sleep(3)
 
         # save these positions on run
-        start_pos = group.get_current_pose().pose.position
-        zero_pos = group.get_current_pose().pose.position
+        robot_initialPos.x = group.get_current_pose().pose.position.x
+        robot_initialPos.y = group.get_current_pose().pose.position.z
+        robot_initialPos.z = group.get_current_pose().pose.position.y
+        robot_zeroPos.x = group.get_current_pose().pose.position.x
+        robot_zeroPos.y = group.get_current_pose().pose.position.z
+        robot_zeroPos.z = group.get_current_pose().pose.position.y
 
-        # create a root window
-        root = tk.Tk()
-        root.title("LM_Move | Control Panel")
-        root.geometry("350x180")
-        root.resizable(False, False)
+        # main GUI window
+        gui_mainWindow = tk.Tk()
+        gui_mainWindow.title("LM-Move | Control Panel")
+        gui_mainWindow.geometry("350x180")
+        gui_mainWindow.resizable(False, False)
         
-        # current pos
-        posLbl_text = tk.StringVar()
-        posLbl = tk.Label(root, textvariable=posLbl_text)
-        posLbl_text.set("Current Position")
-        posLbl.pack()
+        # current position label
+        currentPosText = tk.StringVar()
+        currentPosLabel = tk.Label(gui_mainWindow, textvariable=currentPosText)
+        currentPosText.set("Current Position")
+        currentPosLabel.pack()
 
         # error label
-        errorLbl_text = tk.StringVar()
-        errorLbl = tk.Label(root, textvariable=errorLbl_text, fg="red")
-        errorLbl.pack(side="bottom")
+        errorText = tk.StringVar()
+        errorLabel = tk.Label(gui_mainWindow, textvariable=errorText, fg="red")
+        errorLabel.pack(side="bottom")
 
         # pause button
-        controlBtn_text = tk.StringVar()
-        controlBtn = tk.Button(root, textvariable=controlBtn_text, command=tracking_control, width=20)
-        controlBtn_text.set("Pause")
-        controlBtn.configure(bg="yellow")
-        controlBtn.pack()
+        pauseButtonText = tk.StringVar()
+        pauseButton = tk.Button(gui_mainWindow, textvariable=pauseButtonText, command=trackingControl, width=20)
+        pauseButtonText.set("Resume")
+        pauseButton.configure(bg="green")
+        pauseButton.pack()
 
-        # show zero pos window button
-        showZeroPosBtn = tk.Button(root, text="Zero Pos Info", command=show_zeropos_win, width=20)
-        showZeroPosBtn.pack()
+        # toggle zero pos information window
+        toggleInfoButton = tk.Button(gui_mainWindow, text="Positional Info", command=toggleInfoWindow, width=20)
+        toggleInfoButton.pack()
 
-        # window for zero pos
-        window = tk.Toplevel()
-        window.title("LM_Move | Zero Position Info")
-        window.geometry("350x130")
-        window.resizable(False, False)
-        window.withdraw()
+        # new window for zero pos information
+        gui_positionInfo = tk.Toplevel()
+        gui_positionInfo.title("LM-Move | Position Info")
+        gui_positionInfo.geometry("350x300")
+        # gui_positionInfo.resizable(False, False)
+        gui_positionInfo.withdraw()
 
-        # zero pos label
-        zeroPosLbl_text = tk.StringVar()
-        zeroPosLbl = tk.Label(window, textvariable=zeroPosLbl_text)
-        zeroPosLbl_text.set("Zero Position\n\nNone!")
-        zeroPosLbl.pack(side="left")
+        # robot zero pos label
+        robot_ZeroPosText = tk.StringVar()
+        robot_ZeroPosLabel = tk.Label(gui_positionInfo, textvariable=robot_ZeroPosText)
+        robot_ZeroPosText.set("Robot Zero Position\n\nNone!")
+        robot_ZeroPosLabel.pack()
 
-        # old zero pos label
-        old_zeroPosLbl_text = tk.StringVar()
-        old_zeroPosLbl = tk.Label(window, textvariable=old_zeroPosLbl_text)
-        old_zeroPosLbl_text.set("Previous Zero Position\n\nNone!")
-        old_zeroPosLbl.pack(side="right")
+        # hand zero pos label
+        hand_zeroPosText = tk.StringVar()
+        hand_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=hand_zeroPosText)
+        hand_zeroPosText.set("Hand Zero Position\n\nNone!")
+        hand_zeroPosLabel.pack()
+
+        # previous hand zero pos label
+        prev_hand_zeroPosText = tk.StringVar()
+        prev_hand_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=prev_hand_zeroPosText)
+        prev_hand_zeroPosText.set("Previous Robot Zero Position\n\nNone!")
+        prev_hand_zeroPosLabel.pack()
+
+        # previous robot pos label
+        prev_robot_ZeroPosText = tk.StringVar()
+        prev_robot_ZeroPosLabel = tk.Label(gui_positionInfo, textvariable=prev_robot_ZeroPosText)
+        prev_robot_ZeroPosText.set("Previous Hand Zero Position\n\nNone!")
+        prev_robot_ZeroPosLabel.pack()
 
         # reset zero pos button
-        resetZeroPosBtn = tk.Button(window, text="Reset", command=reset_zeropos, width=20)
-        resetZeroPosBtn.configure(bg="orange")
-        resetZeroPosBtn.pack(side="bottom")
+        resetButton = tk.Button(gui_positionInfo, text="Reset", command=resetZeroPos, width=20)
+        resetButton.configure(bg="orange")
+        resetButton.pack(side="bottom")
 
         # subscribe to data
-        root.after(1, lm_listener)
-        root.mainloop()
+        gui_mainWindow.after(1, subscribeToTopic)
+        # keep the GUI running
+        gui_mainWindow.mainloop()
     except rospy.ROSInterruptException:
         pass
