@@ -12,7 +12,7 @@ import Tkinter as tk
 import tkMessageBox
 
 moveit_commander.roscpp_initialize(sys.argv)
-rospy.init_node('beginExecution', anonymous=True)
+rospy.init_node('lm_move', anonymous=True)
 
 # This object is an interface to the robot as a whole.
 robot = moveit_commander.RobotCommander()
@@ -52,7 +52,7 @@ def begin_plan(hand_pos):
         # display previous zero positions
         prev_hand_zeroPosText.set("Previous Robot Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
             % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
-        prev_robot_ZeroPosText.set("Previous Hand Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
+        prev_robot_zeroPosText.set("Previous Hand Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
             % (hand_zeroPos.x, hand_zeroPos.y, hand_zeroPos.z))
         # set the updated zero positions
         robot_zeroPos.x = group.get_current_pose().pose.position.x
@@ -64,7 +64,7 @@ def begin_plan(hand_pos):
         # display updated zero positions
         hand_zeroPosText.set("Hand Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
             % (hand_zeroPos.x, hand_zeroPos.y, hand_zeroPos.z))
-        robot_ZeroPosText.set("Robot Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
+        robot_zeroPosText.set("Robot Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" \
             % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
         resumedRun = False
 
@@ -177,7 +177,7 @@ def getDesiredPos(hand_pos):
     global robot_zeroPos
     global hand_zeroPos
     # lower leap motion values by this much
-    conversion_value = 0.0005
+    conversion_value = 0.001
     # adjust the offset and pass back the new coordinates
     desired_pos = geometry_msgs.msg.Pose().position
     desired_pos.x = robot_zeroPos.x - ((hand_pos.x - hand_zeroPos.x) * conversion_value) # inverted
@@ -231,13 +231,29 @@ def toggleInfoWindow(*ignore):
         gui_positionInfo_hidden = True
 
 
+def onCloseHide(*ignore):
+    global gui_positionInfo_hidden
+    gui_positionInfo.withdraw()
+    gui_positionInfo_hidden = True
+
+
+def onCloseQuit(*ignore):
+    if tkMessageBox.askokcancel("Quit", "Do you want to quit?"):
+        gui_mainWindow.destroy()
+
+
 def resetZeroPos(*ignore):
     global robot_zeroPos
     global robot_initialPos
-    robot_zeroPos.x = robot_initialPos.x
-    robot_zeroPos.y = robot_initialPos.y
-    robot_zeroPos.z = robot_initialPos.z
-    robot_ZeroPosText.set("Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
+    global paused
+    if not paused:
+        robot_zeroPos.x = robot_initialPos.x
+        robot_zeroPos.y = robot_initialPos.y
+        robot_zeroPos.z = robot_initialPos.z
+        robot_zeroPosText.set("Zero Position\nx: %.3f\ny: %.3f\nz: %.3f" % (robot_zeroPos.x, robot_zeroPos.y, robot_zeroPos.z))
+        tkMessageBox.showinfo("Information", "Zero position has been reset")
+    else:
+        tkMessageBox.showerror("Error", "Cannot reset zero position because the program is currently paused")
 
 
 def subscribeToTopic():
@@ -268,6 +284,12 @@ if __name__ == '__main__':
         robot_zeroPos.y = group.get_current_pose().pose.position.z
         robot_zeroPos.z = group.get_current_pose().pose.position.y
 
+        '''
+        -----------------------------------------
+            gui_mainWindow
+        -----------------------------------------
+        '''
+
         # main GUI window
         gui_mainWindow = tk.Tk()
         gui_mainWindow.title("LM-Move | Control Panel")
@@ -277,7 +299,7 @@ if __name__ == '__main__':
         # current position label
         currentPosText = tk.StringVar()
         currentPosLabel = tk.Label(gui_mainWindow, textvariable=currentPosText)
-        currentPosText.set("Current Position")
+        currentPosText.set("Current Position\n\nNone!\n")
         currentPosLabel.pack()
 
         # error label
@@ -296,44 +318,49 @@ if __name__ == '__main__':
         toggleInfoButton = tk.Button(gui_mainWindow, text="Positional Info", command=toggleInfoWindow, width=20)
         toggleInfoButton.pack()
 
+        '''
+        -----------------------------------------
+            gui_positionInfo
+        -----------------------------------------
+        '''
+
         # new window for zero pos information
         gui_positionInfo = tk.Toplevel()
-        gui_positionInfo.title("LM-Move | Position Info")
-        gui_positionInfo.geometry("350x300")
-        # gui_positionInfo.resizable(False, False)
+        gui_positionInfo.title("LM-Move | Positional Info")
+        gui_positionInfo.geometry("350x160")
+        gui_positionInfo.resizable(False, False)
         gui_positionInfo.withdraw()
 
         # robot zero pos label
-        robot_ZeroPosText = tk.StringVar()
-        robot_ZeroPosLabel = tk.Label(gui_positionInfo, textvariable=robot_ZeroPosText)
-        robot_ZeroPosText.set("Robot Zero Position\n\nNone!")
-        robot_ZeroPosLabel.pack()
+        robot_zeroPosText = tk.StringVar()
+        robot_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=robot_zeroPosText).grid(row=0, column=0)
+        robot_zeroPosText.set("Robot Zero Position\n\nNone!")
 
         # hand zero pos label
         hand_zeroPosText = tk.StringVar()
-        hand_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=hand_zeroPosText)
+        hand_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=hand_zeroPosText).grid(row=0, column=1)
         hand_zeroPosText.set("Hand Zero Position\n\nNone!")
-        hand_zeroPosLabel.pack()
+
+        # previous robot zero pos label
+        prev_robot_zeroPosText = tk.StringVar()
+        prev_robot_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=prev_robot_zeroPosText).grid(row=1, column=0)
+        prev_robot_zeroPosText.set("Previous Hand Zero Position\n\nNone!")
 
         # previous hand zero pos label
         prev_hand_zeroPosText = tk.StringVar()
-        prev_hand_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=prev_hand_zeroPosText)
+        prev_hand_zeroPosLabel = tk.Label(gui_positionInfo, textvariable=prev_hand_zeroPosText).grid(row=1, column=1)
         prev_hand_zeroPosText.set("Previous Robot Zero Position\n\nNone!")
-        prev_hand_zeroPosLabel.pack()
-
-        # previous robot pos label
-        prev_robot_ZeroPosText = tk.StringVar()
-        prev_robot_ZeroPosLabel = tk.Label(gui_positionInfo, textvariable=prev_robot_ZeroPosText)
-        prev_robot_ZeroPosText.set("Previous Hand Zero Position\n\nNone!")
-        prev_robot_ZeroPosLabel.pack()
 
         # reset zero pos button
-        resetButton = tk.Button(gui_positionInfo, text="Reset", command=resetZeroPos, width=20)
+        resetButton = tk.Button(gui_positionInfo, text="Reset Robot Zero Position", command=resetZeroPos, width=20)
         resetButton.configure(bg="orange")
-        resetButton.pack(side="bottom")
+        resetButton.grid(row=2, columnspan=2)
 
         # subscribe to data
         gui_mainWindow.after(1, subscribeToTopic)
+        # handle closing of GUI
+        gui_mainWindow.protocol("WM_DELETE_WINDOW", onCloseQuit)
+        gui_positionInfo.protocol("WM_DELETE_WINDOW", onCloseHide)
         # keep the GUI running
         gui_mainWindow.mainloop()
     except rospy.ROSInterruptException:
