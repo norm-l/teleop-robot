@@ -1,4 +1,4 @@
-# Lukas's Branch
+# LM-Move Branch
 
 Welcome to the Leap Motion branch! Please make sure to review and meet the requirements before attempting to move on to further steps. If there's any issues I'm happy to help.
 
