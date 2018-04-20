@@ -101,7 +101,7 @@ class MoveIt(object):
         self.gui_positionInfo = tk.Toplevel()
         self.gui_positionInfo.title("LM-Move | Positional Info")
         self.gui_positionInfo.geometry("305x160")
-        # self.gui_positionInfo.resizable(False, False)
+        self.gui_positionInfo.resizable(False, False)
         self.gui_positionInfo.withdraw()
 
         # robot zero pos label
@@ -301,6 +301,8 @@ class MoveIt(object):
             self.pauseButton.configure(bg="green")
             # adjust flag
             self.paused = True
+            # if we are paused we don't want to see errors
+            self.errorText.set("")
 
     # action method for pressing the "reset zero position" button
     def resetZeroPos(self, *ignore):
