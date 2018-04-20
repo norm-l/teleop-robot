@@ -1,5 +1,13 @@
 # LM-Move Branch
 
+<p align="center">
+  <img src="https://image.flaticon.com/icons/svg/847/847268.svg" width="100" height="100" />  
+</p>
+
+<p align="center">
+  <img src="https://i.imgur.com/geCgFhS.png" />
+</p>
+
 Welcome to the Leap Motion branch! Please make sure to review and meet the requirements before attempting to move on to further steps. If there's any issues I'm happy to help.
 
 # 1. Requirements  
@@ -52,3 +60,7 @@ Control Panel from Leap Motion SDK:
 *(optional)* **Terminal** -> `LeapControlPanel`  
 See the data being sent:  
 *(optional)* **Terminal** -> `rostopic echo /leapmotion/data | grep "palmpos" -A 3`    
+
+# Notes
+
+Software icon made by [Smartline](https://www.flaticon.com/authors/smartline) from [Flaticon](https://www.flaticon.com/), licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
