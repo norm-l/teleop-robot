@@ -63,4 +63,4 @@ See the data being sent:
 
 # Notes
 
-Software icon made by [Smartline](https://www.flaticon.com/authors/smartline) from [Flaticon](https://www.flaticon.com/), licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
+Robot icon made by [Smartline](https://www.flaticon.com/authors/smartline) from [Flaticon](https://www.flaticon.com/), licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/)
