@@ -2,7 +2,7 @@
   <img src="https://image.flaticon.com/icons/svg/847/847268.svg" width="100" height="100" />  
 </p>
 
-# LM-Move Branch
+# LM-Move
 
 <p align="center">
   <img src="https://i.imgur.com/geCgFhS.png" />
@@ -21,7 +21,7 @@ Welcome to the Leap Motion branch! Please make sure to review and meet the requi
 
 # 2. leap_motion Setup
 
-1. [Replace leapd.service](https://github.com/samisnotinsane/arq-teleop-robot/tree/lukas_development/modified_leapd)
+1. [Replace leapd.service](https://github.com/xylust/teleop-robot/tree/master/modified_leapd)
 
 2. Install the [SDK](https://developer.leapmotion.com/sdk/v2). If you're getting `Errors were encountered while processing: leap:i386` when you try to install (e.g. `sudo dpkg -i Leap-2.3.1+31549-x86.deb`) it means you have not done step 1.
 
@@ -38,8 +38,8 @@ These instructions are also available on the ros wiki (check leap_motion under r
 # 3. Cloning this branch
 
 1. Navigate to `~/catkin_ws/src` or wherever your `catkin_ws` folder is located.
-2. `git clone https://github.com/samisnotinsane/arq-teleop-robot.git`
-3. Navigate to `~/catkin_ws/src/arq-teleop-robot/launch` and continue with the below.  
+2. `git clone https://github.com/xylust/teleop-robot.git`
+3. Navigate to `~/catkin_ws/src/teleop-robot/launch` and continue with the below.  
 
 You might need to `catkin_make` before attempting to launch
 
